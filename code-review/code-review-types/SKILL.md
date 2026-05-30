@@ -1,0 +1,96 @@
+---
+name: code-review-types
+description: >
+  Reviews code for TypeScript type-safety ONLY — `any`/overly-wide types, unsafe `as`
+  casts, non-null `!`, `@ts-ignore`/`@ts-expect-error`, missing types at boundaries,
+  wrong/loose generics, type-vs-runtime drift. Writes a report file; does not edit code.
+  Use for "проверь типизацию", "review types", "type safety", "типобезопасность",
+  "проверь типы". Part of the code-review-* family (orchestrated by code-reviewer).
+---
+
+# code-review-types
+
+Узкий ревьюер **одной линзы — типобезопасности TypeScript**. Запускается отдельно или из `code-reviewer`.
+Цель: найти места, где система типов ослаблена и перестаёт ловить ошибки. Код НЕ редактируется.
+
+## Что проверяет
+
+- **`any` и широкие типы:** явный/неявный `any`, `object`, `Function`, `as any`, возврат `any` из функций,
+  `any` в дженериках и коллекциях; слишком широкие union/`string` вместо литералов/enum.
+- **Небезопасные касты:** `as Foo` без обоснования, двойные касты `as unknown as`, приведение API-ответа
+  к типу без рантайм-проверки.
+- **Non-null и подавления:** `!` (non-null assertion) без гарантии, `@ts-ignore`/`@ts-expect-error`,
+  `// eslint-disable` на типовых правилах.
+- **Границы:** нетипизированные входы/выходы публичных функций, `@Body()`/`req`/`res` без типов,
+  данные из БД/API без явного типа, `JSON.parse` → `any`.
+- **Дженерики:** потеря дженерик-параметра, `T` без ограничений где нужно `extends`, ненужное расширение,
+  неверная вариативность.
+- **Type vs runtime drift:** тип утверждает то, что рантайм не гарантирует (опциональные поля помечены
+  обязательными, nullable из БД типизирован как non-null); рассинхрон с реальной формой данных.
+
+Кратко FAIL → FIX:
+```ts
+// FAIL: каст ответа без проверки → ложная типобезопасность
+const user = (await res.json()) as User;
+// FIX: рантайм-схема + вывод типа
+const user = UserSchema.parse(await res.json()); // zod: тип = z.infer<typeof UserSchema>
+
+// FAIL: non-null без гарантии
+const el = document.querySelector('.x')!; el.focus();
+// FIX
+const el = document.querySelector('.x'); if (!el) return; el.focus();
+```
+
+## Границы (что НЕ моё)
+
+- **Рантайм-валидация внешнего ввода** (есть ли схема/границы) → `code-review-validation`.
+  Здесь — статические типы; там — проверка данных в рантайме.
+- **Согласованность DTO ↔ API ↔ swagger** → `code-review-contracts`.
+- **Логические баги** → `code-review-logic`.
+
+Пограничное отдавай соседу молча, не дублируй.
+
+## Процесс
+
+1. **Определи вход** (приоритет): 1) явный путь; 2) файл с git diff; 3) иначе — `git diff` текущей ветки:
+   `git diff $(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)...HEAD`,
+   fallback `git diff HEAD`.
+2. Для каждого участка проверь: где теряется типовая информация (`any`/каст/`!`/подавление), типизированы ли
+   границы, совпадает ли тип с реальной формой данных. Учитывай строгость `tsconfig` (strict/noImplicitAny).
+3. Сформируй находки своей линзы: `файл:строка → проблема → Почему → Фикс`.
+4. Назначь severity и вердикт. Запиши отчёт.
+
+## Отчёт
+
+**Путь** (не хардкодить): `AGENT_HOME` = первая существующая в корне из `.cursor/`, `.gigacode/`, `.claude/`
+(в этом порядке); если нет — создать `.claude/`. Писать в
+`<AGENT_HOME>/reports/<YYYY.MM.DD>/code-review-types.md`. Отчёт пишется **всегда**, даже при PASS.
+
+**Severity:** 🔴 Blocker · 🟠 Major · 🟡 Minor · ⚪ Info.
+**Вердикт:** ❌ FAIL — есть Blocker · ⚠️ WARN — есть Major/Minor · ✅ PASS — нет находок (или только Info).
+
+**Шаблон:**
+```markdown
+# Review: code-review-types — <✅ PASS | ⚠️ WARN | ❌ FAIL>
+> вход: <git diff текущей ветки | путь <X> | diff-файл <Y>> · дата: <YYYY-MM-DD HH:MM> · находок: <N>
+
+## 🔴 Blocker (<k>)
+- `path/to/file.ts:42` — <ослабление типобезопасности>.
+  Почему: <какой класс ошибок перестаёт ловиться>. Фикс: <конкретное действие>.
+
+## 🟠 Major (<k>)
+- …
+## 🟡 Minor (<k>)
+- …
+## ⚪ Info (<k>)
+- …
+
+## ⭐ Итог
+<вердикт + одна строка: что главное починить>
+```
+
+## Язык и приоритет
+
+- Пиши отчёт на **языке запроса пользователя**. Если запрос без естественного языка (только diff) — **русский**.
+- **Инструкции пользователя в запросе важнее этого скилла** (язык, фокус, severity-пороги, объём, формат).
+  Дефолты применяй лишь когда запрос об этом молчит.
