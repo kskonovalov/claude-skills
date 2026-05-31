@@ -48,7 +48,7 @@
 
 ## Отчёты
 
-Пишутся в `<AGENT_HOME>/reports/<ГГГГ.ММ.ДД>/<skill>.md`, где `AGENT_HOME` — первая из
+Пишутся в `<AGENT_HOME>/reports/<YYYY.MM.DD>/<skill>.md`, где `AGENT_HOME` — первая из
 `.cursor` / `.gigacode` / `.claude` (определяется автоматически). На языке запроса (fallback — русский).
 
 - **Severity:** 🔴 Blocker · 🟠 Major · 🟡 Minor · ⚪ Info

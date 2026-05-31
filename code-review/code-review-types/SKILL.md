@@ -53,12 +53,15 @@ const el = document.querySelector('.x'); if (!el) return; el.focus();
 ## Процесс
 
 1. **Определи вход** (приоритет): 1) явный путь; 2) файл с git diff; 3) иначе — `git diff` текущей ветки:
-   `git diff $(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)...HEAD`,
-   fallback `git diff HEAD`.
+   `BASE=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null); [ -n "$BASE" ] && git diff "$BASE"...HEAD || git diff HEAD`
 2. Для каждого участка проверь: где теряется типовая информация (`any`/каст/`!`/подавление), типизированы ли
    границы, совпадает ли тип с реальной формой данных. Учитывай строгость `tsconfig` (strict/noImplicitAny).
 3. Сформируй находки своей линзы: `файл:строка → проблема → Почему → Фикс`.
 4. Назначь severity и вердикт. Запиши отчёт.
+
+> **Контекст:** diff — это только изменённые строки. Если их не хватает для вывода (guard, проверка,
+> тип или объявление могут быть выше или в другом файле) — открой полный файл перед фиксацией находки.
+> Не подтвердилось — Info «проверить вручную», severity не раздувать.
 
 ## Отчёт
 

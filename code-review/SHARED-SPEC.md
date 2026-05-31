@@ -22,9 +22,12 @@
 Приоритет определения цели ревью:
 1. **Явный путь** в запросе (`/path/to/code` — файл или папка) → ревьюим его.
 2. **Файл с git diff** в запросе (`*.txt`/`*.diff` с выводом `git diff`) → ревьюим его содержимое.
-3. **По умолчанию** — `git diff` текущей ветки относительно базовой:
-   `git diff $(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)...HEAD`;
-   если база/гит недоступны — fallback `git diff HEAD` (незакоммиченные изменения).
+3. **По умолчанию** — `git diff` текущей ветки относительно базовой; если базовой ветки/гита нет —
+   fallback на незакоммиченные изменения (`git diff HEAD`). Самодостаточный сниппет:
+   ```bash
+   BASE=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null)
+   [ -n "$BASE" ] && git diff "$BASE"...HEAD || git diff HEAD
+   ```
 
 ## Путь отчёта (не захардкожен)
 
