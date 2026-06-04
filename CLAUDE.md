@@ -38,8 +38,9 @@ code-review/
 **Как работает:** `/code-reviewer` запускает 9 агентов параллельно (`Agent` tool, `run_in_background: true`,
 каждый со своим `subagent_type`), каждый пишет отчёт в `.claude/reports/<YYYY.MM.DD>/`. Сводка — в `code-reviewer.md`.
 
-**Установка:** скопировать `code-review/skills/code-reviewer/` в `.claude/skills/` проекта.
-Папку `agents/` — рядом или в то же место; оркестратор читает их содержимое и передаёт агентам как промпты.
+**Установка:** скопировать `code-review/skills/code-reviewer/` **и все папки из `code-review/agents/`**
+в `.claude/skills/` проекта. Оркестратор вызывает суб-скиллы по имени через `Skill` — они должны лежать
+рядом с `code-reviewer/` в той же директории скиллов.
 
 ---
 
