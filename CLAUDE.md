@@ -11,6 +11,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Никакого build / lint / test тут нет. «Работа» в этом репозитории = **читать `SKILL.md`, оценивать,
 классифицировать и копировать нужные скиллы наружу** (в `~/.claude/skills/` или в `.claude/skills/` целевого проекта).
 
+---
+
+## Собранные наборы (готовы к установке)
+
+Отобранные и адаптированные инструменты живут в корневых папках (не в `sources/`):
+
+### `code-review/` — гранулярное код-ревью
+
+```
+code-review/
+├── skills/
+│   └── code-reviewer/          ← slash-команда /code-reviewer; оркестратор
+└── agents/                     ← промпты для параллельных фоновых агентов
+    ├── code-review-logic/
+    ├── code-review-error-handling/
+    ├── code-review-validation/
+    ├── code-review-security/
+    ├── code-review-types/
+    ├── code-review-performance/
+    ├── code-review-architecture/
+    ├── code-review-readability/
+    └── code-review-contracts/
+```
+
+**Как работает:** `/code-reviewer` запускает 9 агентов параллельно (`Agent` tool, `run_in_background: true`,
+каждый со своим `subagent_type`), каждый пишет отчёт в `.claude/reports/<YYYY.MM.DD>/`. Сводка — в `code-reviewer.md`.
+
+**Установка:** скопировать `code-review/skills/code-reviewer/` в `.claude/skills/` проекта.
+Папку `agents/` — рядом или в то же место; оркестратор читает их содержимое и передаёт агентам как промпты.
+
+---
+
+### `planning/` — планирование и поэтапная реализация
+
+```
+planning/
+└── skills/
+    ├── brainstorming/      ← уточняет требования (вопросы по одному), пишет спек
+    ├── writing-plans/      ← поэтапный план с TDD-шагами и проверкой после каждого
+    └── executing-plans/    ← исполняет план, стоп при блокере, чекпоинты
+```
+
+**Цепочка:** `brainstorming` → `writing-plans` → `executing-plans`
+
+- `brainstorming`: HARD-GATE перед любым кодом — сначала уточняет все детали по одному, предлагает 2-3 подхода, получает одобрение спека.
+- `writing-plans`: создаёт план с задачами по 2-5 минут, каждая с тестом → запуск → реализация → запуск → коммит.
+- `executing-plans`: исполняет план шаг за шагом, не пропускает проверки, останавливается при блокере.
+
+Спеки сохраняются в `docs/specs/`, планы — в `docs/plans/`.
+
+**Установка:** скопировать все три папки в `.claude/skills/` проекта.
+
+---
+
 ### Анатомия скилла
 Каждый скилл — это папка с файлом `SKILL.md` (YAML-фронтматтер `name` + `description`, далее инструкции).
 Некоторые тянут за собой `references/`, `scripts/`, `assets/`. Установка = скопировать всю папку скилла
