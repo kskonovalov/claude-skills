@@ -105,4 +105,5 @@ After saving the plan, offer execution choice:
 
 **"Plan complete and saved to `docs/plans/<filename>.md`. Ready to start executing?"**
 
+- **RECOMMENDED:** Use `reviewing-plans` skill first to catch plan weaknesses before execution.
 - **REQUIRED SUB-SKILL:** Use `executing-plans` skill to execute task-by-task with checkpoints.

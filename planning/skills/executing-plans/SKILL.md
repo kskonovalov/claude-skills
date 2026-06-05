@@ -65,4 +65,4 @@ After all tasks complete and verified:
 ## Integration
 
 **Workflow:**
-- `brainstorming` → `writing-plans` → **`executing-plans`**
+- `brainstorming` → `writing-plans` → `reviewing-plans` → **`executing-plans`**
